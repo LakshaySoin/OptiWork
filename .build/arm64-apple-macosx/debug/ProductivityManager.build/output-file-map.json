@@ -1,0 +1,33 @@
+{
+  "": {
+    "swift-dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/ProductivityManager.build/primary.swiftdeps"
+  },
+  "/Users/lakshaysoin/Desktop/Productivity-Manger/Sources/ProductivityManager/AppDelegate.swift": {
+    "dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/ProductivityManager.build/AppDelegate.d",
+    "object": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/ProductivityManager.build/AppDelegate.swift.o",
+    "swiftmodule": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/ProductivityManager.build/AppDelegate~partial.swiftmodule",
+    "swift-dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/ProductivityManager.build/AppDelegate.swiftdeps",
+    "diagnostics": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/ProductivityManager.build/AppDelegate.dia"
+  },
+  "/Users/lakshaysoin/Desktop/Productivity-Manger/Sources/ProductivityManager/Presentation.swift": {
+    "dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/ProductivityManager.build/Presentation.d",
+    "object": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/ProductivityManager.build/Presentation.swift.o",
+    "swiftmodule": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/ProductivityManager.build/Presentation~partial.swiftmodule",
+    "swift-dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/ProductivityManager.build/Presentation.swiftdeps",
+    "diagnostics": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/ProductivityManager.build/Presentation.dia"
+  },
+  "/Users/lakshaysoin/Desktop/Productivity-Manger/Sources/ProductivityManager/Views.swift": {
+    "dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/ProductivityManager.build/Views.d",
+    "object": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/ProductivityManager.build/Views.swift.o",
+    "swiftmodule": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/ProductivityManager.build/Views~partial.swiftmodule",
+    "swift-dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/ProductivityManager.build/Views.swiftdeps",
+    "diagnostics": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/ProductivityManager.build/Views.dia"
+  },
+  "/Users/lakshaysoin/Desktop/Productivity-Manger/Sources/ProductivityManager/main.swift": {
+    "dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/ProductivityManager.build/main.d",
+    "object": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/ProductivityManager.build/main.swift.o",
+    "swiftmodule": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/ProductivityManager.build/main~partial.swiftmodule",
+    "swift-dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/ProductivityManager.build/main.swiftdeps",
+    "diagnostics": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/ProductivityManager.build/main.dia"
+  }
+}

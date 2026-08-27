@@ -1,0 +1,26 @@
+{
+  "": {
+    "swift-dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCoreTests.build/primary.swiftdeps"
+  },
+  "/Users/lakshaysoin/Desktop/Productivity-Manger/Tests/FocusTrackerCoreTests/ClassifierSpecTests.swift": {
+    "dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCoreTests.build/ClassifierSpecTests.d",
+    "object": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCoreTests.build/ClassifierSpecTests.swift.o",
+    "swiftmodule": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCoreTests.build/ClassifierSpecTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCoreTests.build/ClassifierSpecTests.swiftdeps",
+    "diagnostics": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCoreTests.build/ClassifierSpecTests.dia"
+  },
+  "/Users/lakshaysoin/Desktop/Productivity-Manger/Tests/FocusTrackerCoreTests/OverrideTests.swift": {
+    "dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCoreTests.build/OverrideTests.d",
+    "object": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCoreTests.build/OverrideTests.swift.o",
+    "swiftmodule": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCoreTests.build/OverrideTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCoreTests.build/OverrideTests.swiftdeps",
+    "diagnostics": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCoreTests.build/OverrideTests.dia"
+  },
+  "/Users/lakshaysoin/Desktop/Productivity-Manger/Tests/FocusTrackerCoreTests/TrackerTests.swift": {
+    "dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCoreTests.build/TrackerTests.d",
+    "object": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCoreTests.build/TrackerTests.swift.o",
+    "swiftmodule": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCoreTests.build/TrackerTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCoreTests.build/TrackerTests.swiftdeps",
+    "diagnostics": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCoreTests.build/TrackerTests.dia"
+  }
+}

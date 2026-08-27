@@ -1,0 +1,33 @@
+{
+  "": {
+    "swift-dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCore.build/primary.swiftdeps"
+  },
+  "/Users/lakshaysoin/Desktop/Productivity-Manger/Sources/FocusTrackerCore/Classify.swift": {
+    "dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCore.build/Classify.d",
+    "object": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCore.build/Classify.swift.o",
+    "swiftmodule": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCore.build/Classify~partial.swiftmodule",
+    "swift-dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCore.build/Classify.swiftdeps",
+    "diagnostics": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCore.build/Classify.dia"
+  },
+  "/Users/lakshaysoin/Desktop/Productivity-Manger/Sources/FocusTrackerCore/Store.swift": {
+    "dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCore.build/Store.d",
+    "object": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCore.build/Store.swift.o",
+    "swiftmodule": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCore.build/Store~partial.swiftmodule",
+    "swift-dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCore.build/Store.swiftdeps",
+    "diagnostics": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCore.build/Store.dia"
+  },
+  "/Users/lakshaysoin/Desktop/Productivity-Manger/Sources/FocusTrackerCore/Tracker.swift": {
+    "dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCore.build/Tracker.d",
+    "object": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCore.build/Tracker.swift.o",
+    "swiftmodule": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCore.build/Tracker~partial.swiftmodule",
+    "swift-dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCore.build/Tracker.swiftdeps",
+    "diagnostics": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCore.build/Tracker.dia"
+  },
+  "/Users/lakshaysoin/Desktop/Productivity-Manger/Sources/FocusTrackerCore/Types.swift": {
+    "dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCore.build/Types.d",
+    "object": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCore.build/Types.swift.o",
+    "swiftmodule": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCore.build/Types~partial.swiftmodule",
+    "swift-dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCore.build/Types.swiftdeps",
+    "diagnostics": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/debug/FocusTrackerCore.build/Types.dia"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "": {
+    "dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/release/FocusTrackerCorePackageTests.build/FocusTrackerCorePackageTests.d",
+    "object": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/release/FocusTrackerCorePackageTests.build/FocusTrackerCorePackageTests.o",
+    "swift-dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/release/FocusTrackerCorePackageTests.build/primary.swiftdeps"
+  },
+  "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/release/FocusTrackerCorePackageTests.derived/runner.swift": {
+    "object": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/release/FocusTrackerCorePackageTests.build/runner.swift.o",
+    "swiftmodule": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/release/FocusTrackerCorePackageTests.build/runner~partial.swiftmodule",
+    "swift-dependencies": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/release/FocusTrackerCorePackageTests.build/runner.swiftdeps",
+    "diagnostics": "/Users/lakshaysoin/Desktop/Productivity-Manger/.build/arm64-apple-macosx/release/FocusTrackerCorePackageTests.build/runner.dia"
+  }
+}

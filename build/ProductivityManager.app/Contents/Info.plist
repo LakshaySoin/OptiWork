@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>                    <string>Productivity Manager</string>
+    <key>CFBundleDisplayName</key>             <string>Productivity Manager</string>
+    <key>CFBundleIdentifier</key>              <string>com.lakshaysoin.productivity-manager</string>
+    <key>CFBundleVersion</key>                 <string>0.1.0</string>
+    <key>CFBundleShortVersionString</key>      <string>0.1.0</string>
+    <key>CFBundleExecutable</key>              <string>ProductivityManager</string>
+    <key>CFBundlePackageType</key>             <string>APPL</string>
+    <key>LSMinimumSystemVersion</key>          <string>13.0</string>
+    <!-- Faceless menu-bar app: no Dock icon, no main window (ADR-0007). -->
+    <key>LSUIElement</key>                     <true/>
+    <key>NSHighResolutionCapable</key>         <true/>
+    <!-- Honest usage strings shown alongside the OS prompts (ADR-0004). -->
+    <key>NSAccessibilityUsageDescription</key>
+    <string>Productivity Manager reads your frontmost window's title to tell
+which task you are focused on (e.g. watching YouTube vs reading an article in
+one browser). Data never leaves this Mac.</string>
+</dict>
+</plist>
