@@ -1,0 +1,38 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Swift Package Manager
+.build/
+.build/*
+.swiftpm/
+.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+Package.resolved
+Packages/
+xcuserdata/
+
+# Xcode
+build/
+DerivedData/
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+*.xcuserstate
+*.xcuserdatad/
+
+# Build artifacts
+*.o
+*.d
+*.dia
+*.swiftdeps
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Tooling
+*.swp
+*~
+.DS_Store?
+._*

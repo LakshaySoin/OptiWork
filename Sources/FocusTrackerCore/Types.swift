@@ -8,7 +8,7 @@ public typealias TimeInterval = Double
 /// The taxonomy of activities this tracker attributes focused time to.
 /// `untracked` is the fallback for anything the rules don't recognize and the
 /// category we attribute to blackout (screen lock / sleep) stretches.
-public enum Category: String, Hashable, Sendable {
+public enum Category: String, Hashable, Sendable, CaseIterable {
     case working
     case coding
     case reading
@@ -86,6 +86,20 @@ public struct CategoryOverride: Hashable, Sendable {
     public init(start: Instant, end: Instant, category: Category) {
         self.start = start
         self.end = end
+        self.category = category
+    }
+}
+
+/// A learned mapping from an app name to a category, persisted when the user
+/// answers the classify HUD (ADR-0010). Matched case-insensitively against the
+/// reported app name (exact or substring), and takes precedence over curated
+/// defaults — it is explicit user intent.
+public struct AppRule: Hashable, Sendable {
+    public let app: String
+    public let category: Category
+
+    public init(app: String, category: Category) {
+        self.app = app
         self.category = category
     }
 }

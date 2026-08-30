@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted — the Today-tab session drill-down described below was removed by ADR-0010 (proactive untracked-classification HUD). The single-popover surface, glanceable menu-bar readout, and Week tab remain in force.
 
 ## Context
 

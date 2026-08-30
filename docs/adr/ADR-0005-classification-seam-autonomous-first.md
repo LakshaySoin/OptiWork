@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted — the per-session override delivery surface (Today-tab session log + correction sheet) is superseded by ADR-0010 (proactive HUD at the moment of uncertainty). The autonomous-first rules, the classify seam, and the override persistence/recompute mechanics remain in force.
 
 ## Context
 

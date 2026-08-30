@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let model = MenuModel()
     private var statusItem: NSStatusItem?
     private var popover = NSPopover()
+    private let hud = ClassifyHUD()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Persistence at ~/Library/Application Support/ProductivityManager/
@@ -27,7 +28,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             MainActor.assumeIsolated {
                 self?.model.apply(snapshot)
                 self?.refreshDot(with: snapshot)
+                self?.hud.evaluate(snapshot)
             }
+        }
+
+        hud.onClassify = { [weak self] app, start, end, category in
+            guard let controller = self?.controller else { return }
+            controller.applyOverride(start: start, end: end, category: category)
+            // Also learn the mapping so this app is classified automatically
+            // from now on — the question is asked once per app (ADR-0010).
+            controller.learnRule(app: app, category: category)
         }
 
         setUpPopover()
@@ -140,7 +150,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: Popover (single surface: Today | Week | Settings)
 
     private func setUpPopover() {
-        popover.contentSize = NSSize(width: 400, height: 500)
+        popover.contentSize = NSSize(width: 340, height: 360)
         popover.behavior = .transient
         popover.animates = true
         let root = RootView(model: model) { [weak self] in self?.controller }

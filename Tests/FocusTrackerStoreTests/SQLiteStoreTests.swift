@@ -152,4 +152,24 @@ final class SQLiteStoreTests: XCTestCase {
                                activityModel: DefaultRules.activityModel())
         XCTAssertEqual(live.breakdown(in: 0..<360), reloaded.breakdown(in: 0..<360))
     }
+
+    // MARK: - Learned app rules (ADR-0010)
+
+    func testSaveLoadAndUpsertLearnedRules() throws {
+        let store = try makeStore()
+        try store.saveRule(AppRule(app: "MusicXYZ", category: .watching))
+        try store.saveRule(AppRule(app: "Figma", category: .working))
+
+        var rules = try store.loadRules()
+        XCTAssertEqual(rules.count, 2)
+        XCTAssertEqual(Set(rules), [AppRule(app: "MusicXYZ", category: .watching),
+                                    AppRule(app: "Figma", category: .working)])
+
+        // Re-learning the same app updates (upsert), not duplicates.
+        try store.saveRule(AppRule(app: "Figma", category: .writing))
+        let updated = try store.loadRules()
+        XCTAssertEqual(updated.count, 2)
+        XCTAssertTrue(updated.contains(AppRule(app: "Figma", category: .writing)))
+        XCTAssertFalse(updated.contains(AppRule(app: "Figma", category: .working)))
+    }
 }

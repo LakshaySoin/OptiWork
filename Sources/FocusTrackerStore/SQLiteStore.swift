@@ -67,6 +67,9 @@ public final class SQLiteStore: Store {
                  "start REAL NOT NULL, end REAL NOT NULL," +
                  "category TEXT NOT NULL," +
                  "PRIMARY KEY (start, end));")
+        try exec("CREATE TABLE IF NOT EXISTS app_rules (" +
+                 "app TEXT PRIMARY KEY," +
+                 "category TEXT NOT NULL);")
     }
 
     deinit {
@@ -288,6 +291,30 @@ public final class SQLiteStore: Store {
     public func deleteOverride(start: Double, end: Double) throws {
         try bindAndStep(sql: "DELETE FROM overrides WHERE start = ? AND end = ?;",
                         binds: [.double(start), .double(end)])
+    }
+
+    // MARK: - Learned app rules (ADR-0010)
+
+    /// Upserts a learned (app → category) mapping keyed by app name.
+    public func saveRule(_ rule: AppRule) throws {
+        try bindAndStep(sql: "INSERT OR REPLACE INTO app_rules(app,category) VALUES(?,?);",
+                        binds: [.text(rule.app), .text(rule.category.rawValue)])
+    }
+
+    public func loadRules() throws -> [AppRule] {
+        var result: [AppRule] = []
+        try query(sql: "SELECT app,category FROM app_rules ORDER BY app ASC;", binds: []) { row in
+            guard let app = Self.columnText(row, 0), !app.isEmpty,
+                  let category = Category(rawValue: Self.columnText(row, 1) ?? "") else { return }
+            result.append(AppRule(app: app, category: category))
+        }
+        return result
+    }
+
+    /// Removes a learned rule entirely — curated defaults apply again.
+    public func deleteRule(app: String) throws {
+        try bindAndStep(sql: "DELETE FROM app_rules WHERE app = ? COLLATE NOCASE;",
+                        binds: [.text(app)])
     }
 }
 

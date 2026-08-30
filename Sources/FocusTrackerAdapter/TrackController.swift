@@ -36,6 +36,8 @@ public final class TrackController {
         public var accessibilityGranted: Bool
         /// Active user corrections, so the UI can mark overridden sessions.
         public var overrides: [CategoryOverride]
+        /// Name of the frontmost app right now (drives the classify HUD).
+        public var foregroundApp: String?
     }
 
     /// Called on the main thread after each sampling tick.
@@ -52,6 +54,9 @@ public final class TrackController {
     private var lastRevealedInput: Instant?
     /// Persisted user corrections (ADR-0005); fed to every Tracker build.
     private var overrides: [CategoryOverride] = []
+    /// Persisted learned app rules (ADR-0010); consulted before defaults.
+    /// Exposed read-only for the Settings surface.
+    public private(set) var learnedRules: [AppRule] = []
 
     /// Injectable clock for deterministic tests: production reads the wall
     /// clock; tests pin time and advance it across midnight boundaries.
@@ -101,18 +106,19 @@ public final class TrackController {
                 NSLog("[ProductivityManager] override load failed: \(error)")
             }
             do {
+                learnedRules = try store.loadRules()
+            } catch {
+                NSLog("[ProductivityManager] learned-rule load failed: \(error)")
+            }
+            do {
                 let since = currentDayStart - Double(loadDaysBack) * 86_400
                 let history = try store.loadObservations(since: since)
-                if !history.isEmpty {
-                    tracker = Tracker(
-                        observations: history,
-                        overrides: overrides,
-                        classify: DefaultRules.classifier(),
-                        activityModel: DefaultRules.activityModel()
-                    )
-                }
+                // Rebuild unconditionally: even with no history, the tracker
+                // must pick up the overrides + learned rules loaded above.
+                rebuildTracker(observations: history.isEmpty ? nil : history)
             } catch {
                 NSLog("[ProductivityManager] failed to load history: \(error)")
+                rebuildTracker()
             }
         }
 
@@ -216,6 +222,56 @@ public final class TrackController {
 
     // MARK: Session overrides (ADR-0005)
 
+    /// The classifier in force: learned app rules (ADR-0010) first, curated
+    /// defaults behind them.
+    private func makeClassifier() -> Classifier {
+        DefaultRules.classifier(learned: learnedRules)
+    }
+
+    /// Rebuilds the tracker over its current observations with the current
+    /// overrides + learned rules (used after loads and after learning).
+    private func rebuildTracker(observations: [Observation]? = nil) {
+        tracker = Tracker(
+            observations: observations ?? tracker.observations,
+            overrides: overrides,
+            classify: makeClassifier(),
+            activityModel: DefaultRules.activityModel()
+        )
+    }
+
+    /// Persists a learned (app → category) mapping and reclassifies — the
+    /// answer to the classify HUD is remembered so the user is never asked
+    /// about the same app again (ADR-0010). Re-learning the same app with a
+    /// different category updates the rule.
+    public func learnRule(app: String, category: Category) {
+        let key = app.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !key.isEmpty else { return }
+        if let idx = learnedRules.firstIndex(where: { $0.app.lowercased() == key.lowercased() }) {
+            learnedRules[idx] = AppRule(app: key, category: category)
+        } else {
+            learnedRules.append(AppRule(app: key, category: category))
+        }
+        if let store {
+            do { try store.saveRule(AppRule(app: key, category: category)) }
+            catch { NSLog("[ProductivityManager] learned-rule save failed: \(error)") }
+        }
+        rebuildTracker()
+        rebuildWeekly()
+        pushUpdate()
+    }
+
+    /// Forgets a learned rule — curated defaults apply to that app again.
+    public func removeRule(app: String) {
+        learnedRules.removeAll { $0.app.lowercased() == app.lowercased() }
+        if let store {
+            do { try store.deleteRule(app: app) }
+            catch { NSLog("[ProductivityManager] learned-rule delete failed: \(error)") }
+        }
+        rebuildTracker()
+        rebuildWeekly()
+        pushUpdate()
+    }
+
     /// Applies a user correction to a session span, persists it durably, and
     /// refreshes every derived view immediately (they all share the render
     /// pass, so Today bars / Week chart / sessions stay in sync — ADR-0002).
@@ -285,7 +341,8 @@ public final class TrackController {
             week: cachedWeek,
             previousWeek: cachedPreviousWeek,
             accessibilityGranted: accessibilityGranted,
-            overrides: overrides
+            overrides: overrides,
+            foregroundApp: currentForeground?.appName
         ))
     }
 
@@ -345,7 +402,7 @@ public final class TrackController {
         tracker = Tracker(
             observations: kept,
             overrides: overrides,
-            classify: DefaultRules.classifier(),
+            classify: makeClassifier(),
             activityModel: DefaultRules.activityModel()
         )
         currentDayStart = newDayStart

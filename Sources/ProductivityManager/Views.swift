@@ -34,25 +34,19 @@ struct RootView: View {
             Divider()
 
             switch tab {
-            case 0:   TodayView(snapshot: model.snapshot) { segment, category in
-                          controllerProvider()?.applyOverride(start: segment.start,
-                                                              end: segment.end,
-                                                              category: category)
-                      }
+            case 0:   TodayView(snapshot: model.snapshot)
             case 1:   WeekView(snapshot: model.snapshot)
             default:  SettingsView(controller: controllerProvider())
             }
         }
-        .frame(width: 400, height: 500)
+        .frame(width: 340, height: 360)
     }
 }
 
-// MARK: - Today (live breakdown + session drill-down)
+// MARK: - Today (live breakdown)
 
 struct TodayView: View {
     let snapshot: TrackController.Snapshot?
-    let onOverride: (Segment, Category) -> Void
-    @State private var pendingOverride: Segment?
 
     var body: some View {
         if let s = snapshot {
@@ -60,16 +54,9 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     header(s)
                     breakdownBars(s.todayBreakdown)
-                    sessionsSection(s.sessionsToday, overrides: s.overrides)
                 }
                 .padding(.horizontal, 14)
                 .padding(.bottom, 14)
-            }
-            .sheet(item: $pendingOverride) { segment in
-                OverridePickerView(segment: segment) { category in
-                    onOverride(segment, category)
-                    pendingOverride = nil
-                }
             }
         } else {
             ProgressView("Starting tracker…")
@@ -163,25 +150,6 @@ struct TodayView: View {
                                 .font(.caption).monospacedDigit()
                                 .frame(width: 56, alignment: .trailing)
                         }
-                    }
-                }
-            }
-        }
-    }
-
-    private func sessionsSection(_ segments: [Segment], overrides: [CategoryOverride]) -> some View {
-        GroupBox(label: Label("Sessions — click one to correct it", systemImage: "list.bullet")) {
-            if segments.isEmpty {
-                Text("Your focused sessions will appear here as you work.")
-                    .font(.caption).foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            } else {
-                VStack(alignment: .leading, spacing: 5) {
-                    ForEach(Array(segments.prefix(60).enumerated()), id: \.offset) { _, seg in
-                        SessionRow(segment: seg,
-                                   isOverridden: overrides.contains { $0.start <= seg.start && $0.end >= seg.end && seg.start < $0.end })
-                            .contentShape(Rectangle())
-                            .onTapGesture { pendingOverride = seg }
                     }
                 }
             }
@@ -346,10 +314,125 @@ struct FlowingLegend: View {
 struct SettingsView: View {
     let controller: TrackController?
     @State private var accessibilityGranted = false
+    @State private var learnedRules: [AppRule] = []
+    @State private var newRuleApp = ""
+    @State private var newRuleCategory: Category = .working
+    @State private var showDefaultRules = false
+
+    private var editableCategories: [Category] {
+        Category.allCases.filter { $0 != .untracked }
+    }
+
+    private var defaultAppRules: [(app: String, titleContains: String?, category: Category)] {
+        DefaultRules.ruleTable().filter { $0.titleContains == nil }
+    }
+
+    /// Site needles are duplicated per supported browser; show each once.
+    private var defaultSiteRules: [(needle: String, category: Category)] {
+        var seen = Set<String>()
+        var result: [(needle: String, category: Category)] = []
+        for rule in DefaultRules.ruleTable() {
+            guard let needle = rule.titleContains, !seen.contains(needle) else { continue }
+            seen.insert(needle)
+            result.append((needle, rule.category))
+        }
+        return result
+    }
+
+    private func refresh() {
+        accessibilityGranted = controller?.accessibilityGranted ?? false
+        learnedRules = controller?.learnedRules ?? []
+    }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
+                GroupBox(label: Label("Your rules", systemImage: "person.badge.shield.checkmark")) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        if learnedRules.isEmpty {
+                            Text("None yet. Answer the classify prompt (or add a rule below) and that app is classified automatically from now on.")
+                                .font(.caption).foregroundStyle(.secondary)
+                        } else {
+                            ForEach(learnedRules, id: \.app) { rule in
+                                HStack(spacing: 6) {
+                                    Circle().fill(rule.category.color).frame(width: 8, height: 8)
+                                    Text(rule.app).font(.caption).lineLimit(1)
+                                    Spacer()
+                                    Text(rule.category.displayName)
+                                        .font(.caption).foregroundStyle(.secondary)
+                                    Button {
+                                        controller?.removeRule(app: rule.app)
+                                        refresh()
+                                    } label: {
+                                        Image(systemName: "trash")
+                                            .font(.caption2).foregroundStyle(.secondary)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .help("Remove this rule — the default classification applies again")
+                                }
+                            }
+                        }
+
+                        Divider()
+
+                        HStack(spacing: 6) {
+                            TextField("App name", text: $newRuleApp)
+                                .textFieldStyle(.roundedBorder)
+                                .font(.caption)
+                            Picker("", selection: $newRuleCategory) {
+                                ForEach(editableCategories, id: \.self) { c in
+                                    Text(c.displayName).tag(c)
+                                }
+                            }
+                            .labelsHidden()
+                            .frame(width: 90)
+                            Button("Add") {
+                                controller?.learnRule(app: newRuleApp, category: newRuleCategory)
+                                newRuleApp = ""
+                                refresh()
+                            }
+                            .disabled(newRuleApp.trimmingCharacters(in: .whitespaces).isEmpty)
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.small)
+                        }
+                        Text("Your rules win over the built-in ones below. Use the app's name as the menu bar shows it (e.g. “Figma”).")
+                            .font(.caption2).foregroundStyle(.secondary)
+                    }
+                }
+
+                GroupBox(label: Label("Built-in rules", systemImage: "list.bullet.rectangle")) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        DisclosureGroup("Show the \(defaultAppRules.count) app rules and \(defaultSiteRules.count) browser rules", isExpanded: $showDefaultRules) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Apps").font(.caption2.bold()).padding(.top, 4)
+                                ForEach(Array(defaultAppRules.enumerated()), id: \.offset) { _, rule in
+                                    HStack(spacing: 6) {
+                                        Circle().fill(rule.category.color).frame(width: 6, height: 6)
+                                        Text(rule.app).font(.caption2)
+                                        Spacer()
+                                        Text(rule.category.displayName)
+                                            .font(.caption2).foregroundStyle(.secondary)
+                                    }
+                                }
+                                Text("Inside browsers, a tab title containing…").font(.caption2.bold()).padding(.top, 4)
+                                ForEach(Array(defaultSiteRules.enumerated()), id: \.offset) { _, rule in
+                                    HStack(spacing: 6) {
+                                        Circle().fill(rule.category.color).frame(width: 6, height: 6)
+                                        Text("“\(rule.needle)”").font(.caption2)
+                                        Spacer()
+                                        Text(rule.category.displayName)
+                                            .font(.caption2).foregroundStyle(.secondary)
+                                    }
+                                }
+                                Text("Anything not covered falls back to Untracked — that's when the classify prompt appears.")
+                                    .font(.caption2).foregroundStyle(.secondary)
+                            }
+                            .padding(.top, 2)
+                        }
+                        .font(.caption)
+                    }
+                }
+
                 GroupBox(label: Label("Window tracking", systemImage: "eye")) {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
@@ -415,9 +498,9 @@ struct SettingsView: View {
             .padding(.horizontal, 14)
             .padding(.bottom, 14)
         }
-        .onAppear { accessibilityGranted = controller?.accessibilityGranted ?? false }
+        .onAppear { refresh() }
         .onReceive(Timer.publish(every: 3, on: .main, in: .common).autoconnect()) { _ in
-            accessibilityGranted = controller?.accessibilityGranted ?? false
+            refresh()
         }
     }
 
@@ -429,92 +512,3 @@ struct SettingsView: View {
     }
 }
 
-
-// MARK: - Session override UI (ADR-0005)
-
-extension Segment: Identifiable {
-    public var id: Double { start }
-}
-
-/// One session row; a pencil marks user-corrected sessions.
-struct SessionRow: View {
-    let segment: Segment
-    let isOverridden: Bool
-
-    var body: some View {
-        HStack {
-            Circle().fill(segment.category.color).frame(width: 7, height: 7)
-            Text(segment.category.displayName)
-                .font(.caption).frame(width: 68, alignment: .leading)
-            Text(Fmt.range(segment.start, segment.end))
-                .font(.caption).foregroundStyle(.secondary)
-                .monospacedDigit()
-            if isOverridden {
-                Image(systemName: "pencil.line")
-                    .font(.caption2)
-                    .foregroundStyle(.orange)
-                    .help("User-corrected category")
-            }
-            Spacer()
-            Text(Fmt.duration(segment.duration))
-                .font(.caption).monospacedDigit()
-        }
-    }
-}
-
-/// The correction sheet: pick what the session actually was.
-struct OverridePickerView: View {
-    let segment: Segment
-    let onPick: (Category) -> Void
-    @Environment(\.dismiss) private var dismiss
-
-    private let choices: [Category] = [
-        .coding, .reading, .writing, .learning, .working,
-        .browsing, .watching, .chatting,
-    ]
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("What was this session actually?")
-                .font(.headline)
-            Text(Fmt.range(segment.start, segment.end) + " · " + Fmt.duration(segment.duration))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .monospacedDigit()
-
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 8)], spacing: 8) {
-                ForEach(choices, id: \.self) { category in
-                    Button {
-                        onPick(category)
-                        dismiss()
-                    } label: {
-                        HStack(spacing: 6) {
-                            Circle().fill(category.color).frame(width: 9, height: 9)
-                            Text(category.displayName).font(.callout)
-                            Spacer()
-                            if category == segment.category {
-                                Image(systemName: "checkmark")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        .padding(.vertical, 6)
-                        .padding(.horizontal, 9)
-                        .background(
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(category == segment.category
-                                      ? Color.gray.opacity(0.18)
-                                      : Color.gray.opacity(0.07)))
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-
-            Text("Your correction applies to this exact time span, survives restarts, and feeds every view. The raw log is never edited — pick the original category again to undo.")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-        }
-        .padding(16)
-        .frame(width: 360)
-    }
-}

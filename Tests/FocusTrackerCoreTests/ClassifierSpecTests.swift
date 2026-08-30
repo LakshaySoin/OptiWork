@@ -164,4 +164,23 @@ final class ClassifierConsequenceTests: XCTestCase {
         assertNear(bd[.watching] ?? 0, 200)
         assertNear(bd[.working] ?? 0, 90)   // working: 120s tolerance covers 310..400
     }
+
+    // MARK: - Learned rules (ADR-0010)
+
+    func testLearnedRuleTakesPrecedenceAndMatchesLoosely() {
+        // "MusicXYZ" matches no default rule; the learned rule must classify
+        // it — including when the reported name carries extra context.
+        let c = DefaultRules.classifier(learned: [AppRule(app: "musicxyz", category: .watching)])
+        XCTAssertEqual(c("MusicXYZ", nil), .watching)
+        XCTAssertEqual(c("MusicXYZ Helper", "Anything"), .watching)
+
+        // Learned rules win over curated defaults for the same app.
+        let c2 = DefaultRules.classifier(learned: [AppRule(app: "xcode", category: .writing)])
+        XCTAssertEqual(c2("Xcode", "main.swift"), .writing)
+
+        // Unknown apps still fall through to curated defaults.
+        let c3 = DefaultRules.classifier(learned: [AppRule(app: "musicxyz", category: .watching)])
+        XCTAssertEqual(c3("Xcode", nil), .coding)
+        XCTAssertEqual(c3("Something Else", nil), .untracked)
+    }
 }

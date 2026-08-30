@@ -14,7 +14,10 @@ public typealias ActivityModelProvider = (Category) -> ActivityModel
 /// and, when a `titleContains` is set, the (lowercased) window title — this is
 /// what lets a browser split into watching/reading/chatting by tab (ADR-0005).
 public enum DefaultRules {
-    public static func classifier() -> Classifier {
+    /// Builds the curated default rule table. Exposed via `ruleTable()` so the
+    /// Settings surface can show users exactly why something classifies as it
+    /// does (ADR-0010).
+    public static func buildRules() -> [(app: String, titleContains: String?, category: Category)] {
         // Site-level title needles shared by every supported browser. A tab
         // whose window title contains the needle maps to the category — this
         // is what splits one browser into coding/learning/chatting by task.
@@ -142,6 +145,17 @@ public enum DefaultRules {
             rules.append((app: browser, titleContains: nil, category: .browsing))
         }
 
+        return rules
+    }
+
+    /// The full curated default rule table (browser-expanded), for display in
+    /// Settings (ADR-0010).
+    public static func ruleTable() -> [(app: String, titleContains: String?, category: Category)] {
+        buildRules()
+    }
+
+    public static func classifier() -> Classifier {
+        let rules = buildRules()
         return { app, title in
             let appLower = app.lowercased()
             let titleLower = title?.lowercased()
@@ -159,6 +173,22 @@ public enum DefaultRules {
                 }
             }
             return .untracked
+        }
+    }
+
+    /// The default classifier preceded by persisted learned app rules
+    /// (ADR-0010): when the user answers the classify HUD for an app, that
+    /// mapping is remembered and wins over curated defaults on every future
+    /// observation — so the question is asked once, not every time.
+    public static func classifier(learned: [AppRule]) -> Classifier {
+        let base = classifier()
+        let learnedRules = learned.map { (key: $0.app.lowercased(), category: $0.category) }
+        return { app, title in
+            let appLower = app.lowercased()
+            for rule in learnedRules where appLower == rule.key || appLower.contains(rule.key) {
+                return rule.category
+            }
+            return base(app, title)
         }
     }
 
