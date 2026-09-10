@@ -90,16 +90,21 @@ public struct CategoryOverride: Hashable, Sendable {
     }
 }
 
-/// A learned mapping from an app name to a category, persisted when the user
-/// answers the classify HUD (ADR-0010). Matched case-insensitively against the
-/// reported app name (exact or substring), and takes precedence over curated
-/// defaults — it is explicit user intent.
+/// A learned rule persisted when the user answers the classify HUD or adds
+/// one in Settings (ADR-0010). Two shapes:
+/// - `needle == nil`: app-level — `app` (case-insensitive exact/substring)
+///   maps to the category. Empty `app` is not allowed for this shape.
+/// - `needle != nil`: keyword rule — matches when the (combined tab-title +
+///   URL) signal contains `needle`; an empty `app` means "any app", so a
+///   keyword can cover every browser. Learned rules win over curated defaults.
 public struct AppRule: Hashable, Sendable {
     public let app: String
+    public let needle: String?
     public let category: Category
 
-    public init(app: String, category: Category) {
+    public init(app: String, needle: String? = nil, category: Category) {
         self.app = app
+        self.needle = needle
         self.category = category
     }
 }

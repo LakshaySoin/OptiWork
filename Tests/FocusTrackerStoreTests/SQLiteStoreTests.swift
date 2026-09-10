@@ -171,5 +171,15 @@ final class SQLiteStoreTests: XCTestCase {
         XCTAssertEqual(updated.count, 2)
         XCTAssertTrue(updated.contains(AppRule(app: "Figma", category: .writing)))
         XCTAssertFalse(updated.contains(AppRule(app: "Figma", category: .working)))
+
+        // Keyword rules persist with their needle and round-trip.
+        try store.saveRule(AppRule(app: "", needle: "arxiv", category: .reading))
+        let withNeedle = try store.loadRules()
+        XCTAssertEqual(withNeedle.count, 3)
+        XCTAssertTrue(withNeedle.contains(AppRule(app: "", needle: "arxiv", category: .reading)))
+
+        // Deleting removes exactly the targeted rule (needle included).
+        try store.deleteRule(AppRule(app: "", needle: "arxiv", category: .reading))
+        XCTAssertEqual(try store.loadRules().count, 2)
     }
 }

@@ -67,9 +67,15 @@ public final class SQLiteStore: Store {
                  "start REAL NOT NULL, end REAL NOT NULL," +
                  "category TEXT NOT NULL," +
                  "PRIMARY KEY (start, end));")
-        try exec("CREATE TABLE IF NOT EXISTS app_rules (" +
-                 "app TEXT PRIMARY KEY," +
-                 "category TEXT NOT NULL);")
+        try exec("CREATE TABLE IF NOT EXISTS learned_rules (" +
+                 "app TEXT NOT NULL DEFAULT ''," +
+                 "needle TEXT," +
+                 "category TEXT NOT NULL," +
+                 "UNIQUE(app, needle));")
+        // One-time migration from the app-only table (pre-keyword rules).
+        try? exec("INSERT OR IGNORE INTO learned_rules(app,needle,category) " +
+                  "SELECT app, NULL, category FROM app_rules;")
+        try? exec("DROP TABLE IF EXISTS app_rules;")
     }
 
     deinit {
@@ -293,28 +299,35 @@ public final class SQLiteStore: Store {
                         binds: [.double(start), .double(end)])
     }
 
-    // MARK: - Learned app rules (ADR-0010)
+    // MARK: - Learned rules (ADR-0010)
 
-    /// Upserts a learned (app → category) mapping keyed by app name.
+    /// Upserts a learned rule keyed by (app, needle). Nil needles are stored
+    /// as '' — SQLite UNIQUE treats NULLs as distinct, which would break
+    /// upsert semantics for app-only rules.
     public func saveRule(_ rule: AppRule) throws {
-        try bindAndStep(sql: "INSERT OR REPLACE INTO app_rules(app,category) VALUES(?,?);",
-                        binds: [.text(rule.app), .text(rule.category.rawValue)])
+        try bindAndStep(sql: "INSERT OR REPLACE INTO learned_rules(app,needle,category) VALUES(?,?,?);",
+                        binds: [.text(rule.app), .textOrNil(rule.needle ?? ""),
+                                .text(rule.category.rawValue)])
     }
 
     public func loadRules() throws -> [AppRule] {
         var result: [AppRule] = []
-        try query(sql: "SELECT app,category FROM app_rules ORDER BY app ASC;", binds: []) { row in
-            guard let app = Self.columnText(row, 0), !app.isEmpty,
-                  let category = Category(rawValue: Self.columnText(row, 1) ?? "") else { return }
-            result.append(AppRule(app: app, category: category))
+        try query(sql: "SELECT app,needle,category FROM learned_rules ORDER BY app ASC;", binds: []) { row in
+            let app = Self.columnText(row, 0) ?? ""
+            let needle = Self.columnText(row, 1)
+            guard let category = Category(rawValue: Self.columnText(row, 2) ?? ""),
+                  !(app.isEmpty && (needle == nil || needle!.isEmpty)) else { return }
+            result.append(AppRule(app: app,
+                                  needle: (needle?.isEmpty ?? true) ? nil : needle,
+                                  category: category))
         }
         return result
     }
 
-    /// Removes a learned rule entirely — curated defaults apply again.
-    public func deleteRule(app: String) throws {
-        try bindAndStep(sql: "DELETE FROM app_rules WHERE app = ? COLLATE NOCASE;",
-                        binds: [.text(app)])
+    /// Removes one learned rule exactly (app + needle).
+    public func deleteRule(_ rule: AppRule) throws {
+        try bindAndStep(sql: "DELETE FROM learned_rules WHERE app = ? COLLATE NOCASE AND needle = ?;",
+                        binds: [.text(rule.app), .textOrNil(rule.needle ?? "")])
     }
 }
 

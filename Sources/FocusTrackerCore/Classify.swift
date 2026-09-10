@@ -182,11 +182,26 @@ public enum DefaultRules {
     /// observation — so the question is asked once, not every time.
     public static func classifier(learned: [AppRule]) -> Classifier {
         let base = classifier()
-        let learnedRules = learned.map { (key: $0.app.lowercased(), category: $0.category) }
+        let learnedRules = learned.map { rule in
+            (key: rule.app.lowercased(), needle: rule.needle?.lowercased(), category: rule.category)
+        }
         return { app, title in
             let appLower = app.lowercased()
-            for rule in learnedRules where appLower == rule.key || appLower.contains(rule.key) {
-                return rule.category
+            let titleLower = title?.lowercased()
+            for rule in learnedRules {
+                // Empty app key = "any app" (keyword-only rules).
+                if !rule.key.isEmpty,
+                   appLower != rule.key, !appLower.contains(rule.key) {
+                    continue
+                }
+                // A needle rule additionally requires the title/URL match.
+                if let needle = rule.needle {
+                    if let t = titleLower, t.contains(needle) {
+                        return rule.category
+                    }
+                } else if !rule.key.isEmpty {
+                    return rule.category
+                }
             }
             return base(app, title)
         }

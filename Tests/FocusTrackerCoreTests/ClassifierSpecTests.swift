@@ -183,4 +183,18 @@ final class ClassifierConsequenceTests: XCTestCase {
         XCTAssertEqual(c3("Xcode", nil), .coding)
         XCTAssertEqual(c3("Something Else", nil), .untracked)
     }
+
+    func testLearnedKeywordRuleMatchesTitleAcrossApps() {
+        // Keyword rules with an empty app match any app's title/URL signal —
+        // this is how users cover browser tabs the defaults miss (ADR-0010).
+        let c = DefaultRules.classifier(learned: [
+            AppRule(app: "", needle: "arxiv", category: .reading),
+            AppRule(app: "chrome", needle: "ddl", category: .working),
+        ])
+        XCTAssertEqual(c("Google Chrome", "Designing Data-Intensive Applications ddl"), .working)
+        XCTAssertEqual(c("Safari", "arxiv.org/abs/2401.12345"), .reading)
+        // No needle match → defaults apply.
+        XCTAssertEqual(c("Google Chrome", "Random tab"), .browsing)
+        XCTAssertEqual(c("Xcode", nil), .coding)
+    }
 }

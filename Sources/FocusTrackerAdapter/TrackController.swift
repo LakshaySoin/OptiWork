@@ -38,6 +38,8 @@ public final class TrackController {
         public var overrides: [CategoryOverride]
         /// Name of the frontmost app right now (drives the classify HUD).
         public var foregroundApp: String?
+        /// True while the user has paused tracking (ADR-0010 Settings surface).
+        public var isPaused: Bool
     }
 
     /// Called on the main thread after each sampling tick.
@@ -57,6 +59,8 @@ public final class TrackController {
     /// Persisted learned app rules (ADR-0010); consulted before defaults.
     /// Exposed read-only for the Settings surface.
     public private(set) var learnedRules: [AppRule] = []
+    /// True while the user has paused tracking (Settings → Application).
+    public private(set) var isPaused = false
 
     /// Injectable clock for deterministic tests: production reads the wall
     /// clock; tests pin time and advance it across midnight boundaries.
@@ -173,6 +177,10 @@ public final class TrackController {
 
     public func tick() {
         let now = clock()
+        // While paused, stop sampling and recording entirely (frees the
+        // per-tick foreground/title reads); the menu dot stays in the paused
+        // state set by setPaused().
+        if isPaused { return }
 
         rollOverDayIfNeeded(at: now)
 
@@ -239,20 +247,26 @@ public final class TrackController {
         )
     }
 
-    /// Persists a learned (app → category) mapping and reclassifies — the
-    /// answer to the classify HUD is remembered so the user is never asked
-    /// about the same app again (ADR-0010). Re-learning the same app with a
-    /// different category updates the rule.
-    public func learnRule(app: String, category: Category) {
+    /// Persists a learned rule and reclassifies — the answer to the classify
+    /// HUD is remembered so the user is never asked about the same app again,
+    /// and Settings-added keyword rules take effect immediately (ADR-0010).
+    /// Re-learning the same (app, needle) updates the rule.
+    public func learnRule(app: String, needle: String? = nil, category: Category) {
         let key = app.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !key.isEmpty else { return }
-        if let idx = learnedRules.firstIndex(where: { $0.app.lowercased() == key.lowercased() }) {
-            learnedRules[idx] = AppRule(app: key, category: category)
+        let cleanNeedle = needle?.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !key.isEmpty || !(cleanNeedle?.isEmpty ?? true) else { return }
+        let rule = AppRule(app: key,
+                           needle: (cleanNeedle?.isEmpty ?? true) ? nil : cleanNeedle,
+                           category: category)
+        if let idx = learnedRules.firstIndex(where: {
+            $0.app.lowercased() == rule.app.lowercased() && $0.needle?.lowercased() == rule.needle?.lowercased()
+        }) {
+            learnedRules[idx] = rule
         } else {
-            learnedRules.append(AppRule(app: key, category: category))
+            learnedRules.append(rule)
         }
         if let store {
-            do { try store.saveRule(AppRule(app: key, category: category)) }
+            do { try store.saveRule(rule) }
             catch { NSLog("[ProductivityManager] learned-rule save failed: \(error)") }
         }
         rebuildTracker()
@@ -260,11 +274,13 @@ public final class TrackController {
         pushUpdate()
     }
 
-    /// Forgets a learned rule — curated defaults apply to that app again.
-    public func removeRule(app: String) {
-        learnedRules.removeAll { $0.app.lowercased() == app.lowercased() }
+    /// Forgets a learned rule — curated defaults apply again.
+    public func removeRule(_ rule: AppRule) {
+        learnedRules.removeAll {
+            $0.app.lowercased() == rule.app.lowercased() && $0.needle?.lowercased() == rule.needle?.lowercased()
+        }
         if let store {
-            do { try store.deleteRule(app: app) }
+            do { try store.deleteRule(rule) }
             catch { NSLog("[ProductivityManager] learned-rule delete failed: \(error)") }
         }
         rebuildTracker()
@@ -342,8 +358,22 @@ public final class TrackController {
             previousWeek: cachedPreviousWeek,
             accessibilityGranted: accessibilityGranted,
             overrides: overrides,
-            foregroundApp: currentForeground?.appName
+            foregroundApp: currentForeground?.appName,
+            isPaused: isPaused
         ))
+    }
+
+    /// Pauses or resumes tracking. While paused no observations are recorded
+    /// or sampled, so the app uses minimal resources but stays in the menu
+    /// bar. Resuming continues the timeline immediately.
+    public func setPaused(_ paused: Bool) {
+        guard paused != isPaused else { return }
+        isPaused = paused
+        if paused {
+            pushUpdate()   // flip the dot to its paused state now
+        } else {
+            tick()         // sample immediately on resume
+        }
     }
 
     /// Recomputes the cached 7-day and previous-week aggregates from the

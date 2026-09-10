@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 import Combine
 import FocusTrackerCore
 import FocusTrackerAdapter
@@ -316,8 +317,10 @@ struct SettingsView: View {
     @State private var accessibilityGranted = false
     @State private var learnedRules: [AppRule] = []
     @State private var newRuleApp = ""
+    @State private var newRuleNeedle = ""
     @State private var newRuleCategory: Category = .working
     @State private var showDefaultRules = false
+    @State private var paused = false
 
     private var editableCategories: [Category] {
         Category.allCases.filter { $0 != .untracked }
@@ -342,6 +345,7 @@ struct SettingsView: View {
     private func refresh() {
         accessibilityGranted = controller?.accessibilityGranted ?? false
         learnedRules = controller?.learnedRules ?? []
+        paused = controller?.isPaused ?? false
     }
 
     var body: some View {
@@ -353,15 +357,23 @@ struct SettingsView: View {
                             Text("None yet. Answer the classify prompt (or add a rule below) and that app is classified automatically from now on.")
                                 .font(.caption).foregroundStyle(.secondary)
                         } else {
-                            ForEach(learnedRules, id: \.app) { rule in
+                            ForEach(learnedRules, id: \.self) { rule in
                                 HStack(spacing: 6) {
                                     Circle().fill(rule.category.color).frame(width: 8, height: 8)
-                                    Text(rule.app).font(.caption).lineLimit(1)
+                                    VStack(alignment: .leading, spacing: 0) {
+                                        Text(rule.app.isEmpty ? "Any app" : rule.app)
+                                            .font(.caption).lineLimit(1)
+                                        if let needle = rule.needle {
+                                            Text("“\(needle)” in tab title / URL")
+                                                .font(.caption2).foregroundStyle(.secondary)
+                                                .lineLimit(1)
+                                        }
+                                    }
                                     Spacer()
                                     Text(rule.category.displayName)
                                         .font(.caption).foregroundStyle(.secondary)
                                     Button {
-                                        controller?.removeRule(app: rule.app)
+                                        controller?.removeRule(rule)
                                         refresh()
                                     } label: {
                                         Image(systemName: "trash")
@@ -375,27 +387,39 @@ struct SettingsView: View {
 
                         Divider()
 
-                        HStack(spacing: 6) {
-                            TextField("App name", text: $newRuleApp)
-                                .textFieldStyle(.roundedBorder)
-                                .font(.caption)
-                            Picker("", selection: $newRuleCategory) {
-                                ForEach(editableCategories, id: \.self) { c in
-                                    Text(c.displayName).tag(c)
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(spacing: 6) {
+                                TextField("App (optional)", text: $newRuleApp)
+                                    .textFieldStyle(.roundedBorder)
+                                    .font(.caption)
+                                TextField("keyword in tab/URL (optional)", text: $newRuleNeedle)
+                                    .textFieldStyle(.roundedBorder)
+                                    .font(.caption)
+                                Picker("", selection: $newRuleCategory) {
+                                    ForEach(editableCategories, id: \.self) { c in
+                                        Text(c.displayName).tag(c)
+                                    }
                                 }
+                                .labelsHidden()
+                                .frame(width: 84)
                             }
-                            .labelsHidden()
-                            .frame(width: 90)
-                            Button("Add") {
-                                controller?.learnRule(app: newRuleApp, category: newRuleCategory)
-                                newRuleApp = ""
-                                refresh()
+                            HStack {
+                                Button("Add rule") {
+                                    controller?.learnRule(app: newRuleApp,
+                                                          needle: newRuleNeedle.isEmpty ? nil : newRuleNeedle,
+                                                          category: newRuleCategory)
+                                    newRuleApp = ""
+                                    newRuleNeedle = ""
+                                    refresh()
+                                }
+                                .disabled(newRuleApp.trimmingCharacters(in: .whitespaces).isEmpty
+                                          && newRuleNeedle.trimmingCharacters(in: .whitespaces).isEmpty)
+                                .buttonStyle(.borderedProminent)
+                                .controlSize(.small)
+                                Spacer()
                             }
-                            .disabled(newRuleApp.trimmingCharacters(in: .whitespaces).isEmpty)
-                            .buttonStyle(.borderedProminent)
-                            .controlSize(.small)
                         }
-                        Text("Your rules win over the built-in ones below. Use the app's name as the menu bar shows it (e.g. “Figma”).")
+                        Text("Your rules win over the built-in ones. Leave the app blank to match a keyword in any browser tab (e.g. “arxiv” → Reading); leave the keyword blank to match an app by name.")
                             .font(.caption2).foregroundStyle(.secondary)
                     }
                 }
@@ -494,6 +518,34 @@ struct SettingsView: View {
                     }
                     .padding(.vertical, 2)
                 }
+
+                GroupBox(label: Label("Application", systemImage: "power")) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Toggle(isOn: Binding(get: { paused },
+                                              set: { newValue in
+                                                  paused = newValue
+                                                  controller?.setPaused(newValue)
+                                              })) {
+                            Text(paused ? "Paused — tracking is off" : "Pause tracking")
+                        }
+                        .font(.callout)
+                        .controlSize(.small)
+
+                        Text("Pause to stop recording and sampling while keeping the app in your menu bar (it uses minimal resources while paused). Toggle back on to resume.")
+                            .font(.caption).foregroundStyle(.secondary)
+
+                        Divider()
+
+                        Button("Quit Productivity Manager") {
+                            confirmShutDown()
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        Text("Quitting stops tracking, frees all resources, and removes the menu-bar item. Relaunch anytime from Applications.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 2)
+                }
             }
             .padding(.horizontal, 14)
             .padding(.bottom, 14)
@@ -501,6 +553,21 @@ struct SettingsView: View {
         .onAppear { refresh() }
         .onReceive(Timer.publish(every: 3, on: .main, in: .common).autoconnect()) { _ in
             refresh()
+        }
+    }
+
+    /// Asks before quitting so an accidental click can't stop tracking, then
+    /// terminates — `AppDelegate.applicationShouldTerminate` flushes pending
+    /// timeline data first, so nothing is lost.
+    private func confirmShutDown() {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "Quit Productivity Manager?"
+        alert.informativeText = "Tracking stops and the app leaves your menu bar. You can relaunch it anytime from Applications."
+        alert.addButton(withTitle: "Quit")
+        alert.addButton(withTitle: "Cancel")
+        if alert.runModal() == .alertFirstButtonReturn {
+            NSApp.terminate(nil)
         }
     }
 

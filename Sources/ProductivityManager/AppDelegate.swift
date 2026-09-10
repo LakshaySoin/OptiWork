@@ -28,7 +28,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             MainActor.assumeIsolated {
                 self?.model.apply(snapshot)
                 self?.refreshDot(with: snapshot)
-                self?.hud.evaluate(snapshot)
+                if snapshot.isPaused {
+                    self?.hud.hide()
+                } else {
+                    self?.hud.evaluate(snapshot)
+                }
             }
         }
 
@@ -85,6 +89,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func refreshDot(with snapshot: TrackController.Snapshot) {
         guard let button = statusItem?.button else { return }
         let now = snapshot.currentActivity
+
+        // Paused: a hollow gray ring + explicit tooltip, distinct from every
+        // live state so it's clear tracking is off.
+        if snapshot.isPaused {
+            button.image = AppDelegate.dotImage(color: .systemGray.withAlphaComponent(0.55), hollow: true)
+            button.toolTip = "Productivity Manager — tracking paused"
+            return
+        }
 
         // ADR-0007 at-rest glance grammar — four distinguishable states:
         //   solid category color  → categorized activity, focused

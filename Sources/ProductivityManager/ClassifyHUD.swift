@@ -44,15 +44,17 @@ final class ClassifyHUD {
             return
         }
 
+        // Already showing for this app: leave it up. This MUST come before the
+        // cooldown check — after we show(), the entry we just recorded would
+        // otherwise make the next tick's cooldown check hide the panel within
+        // one 5s interval, long before the 45s auto-dismiss.
+        if panel?.isVisible == true, promptedApp == app { return }
+
         // Cooldown: the same app is only asked about once per 10 minutes.
         lastPrompted = lastPrompted.filter { snapshot.now - $0.value < Self.cooldown }
         if let last = lastPrompted[app], snapshot.now - last < Self.cooldown {
-            hide()
             return
         }
-
-        // Already showing for this app: leave it up.
-        if panel?.isVisible == true, promptedApp == app { return }
 
         lastPrompted[app] = snapshot.now
         promptedApp = app
